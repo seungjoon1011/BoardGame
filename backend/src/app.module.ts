@@ -6,6 +6,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './modules/auth/auth.module';
 import { RedisModule } from './redis/redis.module';
 import { ConfigModule } from '@nestjs/config';
+import { BoardGameModule } from './modules/boardgame/boardgame.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { ConfigModule } from '@nestjs/config';
     UsersModule,
     AuthModule,
     RedisModule,
+    BoardGameModule,
     ConfigModule.forRoot({
       isGlobal: true,
     }),
