@@ -11,7 +11,7 @@ export class BoardGameService {
     private readonly boardgameRepository: Repository<BoardGame>,
   ) {}
   findAll() {
-    return this.boardgameRepository.find;
+    return this.boardgameRepository.find();
   }
   async create(dto: CreateBG) {
     const bg = this.boardgameRepository.create(dto);
