@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
-import { apiRequest } from "@/lib/api";
+import { ChangeEvent, FormEvent, useState } from "react";
+import { apiRequest, uploadFile, type UploadResponse } from "@/lib/api";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -14,9 +14,11 @@ export default function RegisterPage() {
   const [birth, setBirth] = useState("");
   const [code, setCode] = useState("");
   const [message, setMessage] = useState("");
+  const [profileImage, setProfileImage] = useState<UploadResponse | null>(null);
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [isSendingCode, setIsSendingCode] = useState(false);
   const [isVerifyingCode, setIsVerifyingCode] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function sendCode() {
@@ -58,6 +60,34 @@ export default function RegisterPage() {
     }
   }
 
+  async function handleProfileImageChange(
+    event: ChangeEvent<HTMLInputElement>,
+  ) {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    setMessage("");
+    setIsUploadingImage(true);
+
+    try {
+      const uploadedImage = await uploadFile("/s3/users/profile-image", file);
+      setProfileImage(uploadedImage);
+      setMessage("프로필 이미지가 업로드되었습니다.");
+    } catch (error) {
+      setProfileImage(null);
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "프로필 이미지 업로드에 실패했습니다.",
+      );
+    } finally {
+      setIsUploadingImage(false);
+    }
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage("");
@@ -72,7 +102,18 @@ export default function RegisterPage() {
     try {
       await apiRequest("/auth/register", {
         method: "POST",
-        body: { username, email, password, birth },
+        body: {
+          username,
+          email,
+          password,
+          birth,
+          ...(profileImage
+            ? {
+                profileImageKey: profileImage.key,
+                profileImageUrl: profileImage.url,
+              }
+            : {}),
+        },
       });
       router.push("/login");
     } catch (error) {
@@ -148,6 +189,41 @@ export default function RegisterPage() {
             </div>
           </label>
 
+          <div>
+            <span className="text-sm font-medium">프로필 이미지</span>
+            <div className="mt-2 flex flex-col gap-3 rounded-md border border-neutral-200 bg-neutral-50 p-4 sm:flex-row sm:items-center">
+              <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-md border border-neutral-200 bg-white">
+                {profileImage ? (
+                  <img
+                    src={profileImage.url}
+                    alt="업로드된 프로필 이미지"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <span className="px-3 text-center text-xs text-neutral-500">
+                    이미지 없음
+                  </span>
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleProfileImageChange}
+                  disabled={isUploadingImage}
+                  className="block w-full text-sm text-neutral-700 file:mr-3 file:h-10 file:rounded-md file:border-0 file:bg-neutral-950 file:px-4 file:font-medium file:text-white hover:file:bg-neutral-800 disabled:cursor-not-allowed"
+                />
+                <p className="mt-2 text-sm text-neutral-500">
+                  {isUploadingImage
+                    ? "업로드 중"
+                    : profileImage
+                      ? profileImage.key
+                      : "5MB 이하 이미지 파일을 선택하세요."}
+                </p>
+              </div>
+            </div>
+          </div>
+
           <label className="block">
             <span className="text-sm font-medium">닉네임</span>
             <input
@@ -201,7 +277,7 @@ export default function RegisterPage() {
 
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || isUploadingImage}
             className="h-11 w-full rounded-md bg-neutral-950 px-4 font-medium text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:bg-neutral-400"
           >
             {isSubmitting ? "가입 중" : "회원가입"}
@@ -218,4 +294,3 @@ export default function RegisterPage() {
     </main>
   );
 }
-

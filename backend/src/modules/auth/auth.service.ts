@@ -1,4 +1,9 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { LoginDto } from './dto/loginDto';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../user/user.service';
@@ -32,24 +37,70 @@ export class AuthService {
       password: hashedPw,
     });
     await this.redis.del(`email:isAuth:${dto.email}`);
-    return this.userRepository.save(user);
+    const savedUser = await this.userRepository.save(user);
+    const { password, refreshToken, ...safeUser } = savedUser;
+    return safeUser;
   }
+
   async login(dto: LoginDto) {
     const realUser = await this.userService.findByEmail(dto.email);
-    console.log(realUser);
     if (!realUser) {
-      throw new Error('User not found');
+      throw new UnauthorizedException(
+        '이메일 또는 비밀번호가 올바르지 않습니다.',
+      );
     }
     const isMatch = await bcrypt.compare(dto.password, realUser.password);
-    if (isMatch) {
-      const payload = {
-        sub: realUser.id,
-        email: realUser.email,
-      };
-      console.log('로그인 성공');
-      return {
-        access_token: this.jwtService.sign(payload),
-      };
+
+    if (!isMatch) {
+      throw new UnauthorizedException(
+        '이메일 또는 비밀번호가 올바르지 않습니다.',
+      );
     }
+
+    return this.issueTokens(realUser);
+  }
+
+  async refresh(refreshToken: string) {
+    let payload: { sub: number; email: string };
+
+    try {
+      payload = this.jwtService.verify(refreshToken);
+    } catch {
+      throw new UnauthorizedException('refresh token이 유효하지 않습니다.');
+    }
+
+    const user = await this.userRepository.findOne({
+      where: { id: payload.sub },
+    });
+
+    if (!user?.refreshToken) {
+      throw new UnauthorizedException('refresh token이 유효하지 않습니다.');
+    }
+
+    const isMatch = await bcrypt.compare(refreshToken, user.refreshToken);
+
+    if (!isMatch) {
+      throw new UnauthorizedException('refresh token이 유효하지 않습니다.');
+    }
+
+    return this.issueTokens(user);
+  }
+
+  private async issueTokens(user: User) {
+    const payload = {
+      sub: user.id,
+      email: user.email,
+    };
+    const accessToken = this.jwtService.sign(payload, { expiresIn: '1h' });
+    const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
+
+    await this.userRepository.update(user.id, {
+      refreshToken: await bcrypt.hash(refreshToken, 10),
+    });
+
+    return {
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    };
   }
 }

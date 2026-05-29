@@ -22,4 +22,10 @@ export class BoardGame {
 
   @Column('json')
   genres: string[];
+
+  @Column({ nullable: true })
+  imageKey?: string;
+
+  @Column({ nullable: true })
+  imageUrl?: string;
 }

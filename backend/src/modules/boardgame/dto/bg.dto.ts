@@ -1,4 +1,10 @@
-import { IsArray, IsNumber, IsString } from 'class-validator';
+import {
+  IsArray,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUrl,
+} from 'class-validator';
 
 export class CreateBG {
   @IsString()
@@ -19,4 +25,12 @@ export class CreateBG {
   @IsArray()
   @IsString({ each: true })
   genres: string[];
+
+  @IsOptional()
+  @IsString()
+  imageKey?: string;
+
+  @IsOptional()
+  @IsUrl()
+  imageUrl?: string;
 }

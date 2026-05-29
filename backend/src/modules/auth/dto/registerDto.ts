@@ -1,4 +1,11 @@
-import { IsString, IsEmail, MinLength, IsDateString } from 'class-validator';
+import {
+  IsString,
+  IsEmail,
+  MinLength,
+  IsDateString,
+  IsOptional,
+  IsUrl,
+} from 'class-validator';
 
 export class RegisterDto {
   @IsString()
@@ -12,4 +19,12 @@ export class RegisterDto {
 
   @IsDateString()
   birth: string;
+
+  @IsOptional()
+  @IsString()
+  profileImageKey?: string;
+
+  @IsOptional()
+  @IsUrl()
+  profileImageUrl?: string;
 }

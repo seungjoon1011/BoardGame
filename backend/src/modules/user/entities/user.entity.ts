@@ -16,4 +16,13 @@ export class User {
 
   @Column()
   birth: Date;
+
+  @Column({ nullable: true })
+  profileImageKey?: string;
+
+  @Column({ nullable: true })
+  profileImageUrl?: string;
+
+  @Column({ nullable: true })
+  refreshToken?: string;
 }

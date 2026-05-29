@@ -1,37 +1,42 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
-import { apiRequest } from "@/lib/api";
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { FormEvent, useState } from 'react';
+import { apiRequest } from '@/lib/api';
+import { saveAuthTokens } from '@/lib/auth';
 
 type LoginResponse = {
   access_token: string;
+  refresh_token: string;
 };
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setMessage("");
+    setMessage('');
     setIsSubmitting(true);
 
     try {
-      const data = await apiRequest<LoginResponse>("/auth/login", {
-        method: "POST",
+      const data = await apiRequest<LoginResponse>('/auth/login', {
+        method: 'POST',
         body: { email, password },
       });
 
-      localStorage.setItem("accessToken", data.access_token);
-      router.push("/boardgames");
+      saveAuthTokens({
+        accessToken: data.access_token,
+        refreshToken: data.refresh_token,
+      });
+      router.push('/boardgames');
     } catch (error) {
       setMessage(
-        error instanceof Error ? error.message : "로그인에 실패했습니다.",
+        error instanceof Error ? error.message : '로그인에 실패했습니다.',
       );
     } finally {
       setIsSubmitting(false);
@@ -89,12 +94,12 @@ export default function LoginPage() {
             disabled={isSubmitting}
             className="h-11 w-full rounded-md bg-neutral-950 px-4 font-medium text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:bg-neutral-400"
           >
-            {isSubmitting ? "로그인 중" : "로그인"}
+            {isSubmitting ? '로그인 중' : '로그인'}
           </button>
         </form>
 
         <p className="mt-5 text-center text-sm text-neutral-600">
-          계정이 없나요?{" "}
+          계정이 없나요?{' '}
           <Link href="/register" className="font-medium text-neutral-950">
             회원가입
           </Link>
@@ -103,4 +108,3 @@ export default function LoginPage() {
     </main>
   );
 }
-
