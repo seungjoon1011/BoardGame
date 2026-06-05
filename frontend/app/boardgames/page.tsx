@@ -150,20 +150,26 @@ export default function BoardGamesPage() {
             {boardGames.map((game) => (
               <article
                 key={game.id}
-                className="overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm"
+                className="overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm transition-all duration-300 hover:shadow-md"
               >
                 {game.imageUrl ? (
-                  <div className="aspect-[16/9] bg-neutral-100">
-                    <img
-                      src={game.imageUrl}
-                      alt={`${game.name} 이미지`}
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
+                  <Link href={`/boardgames/${game.id}`}>
+                    <div className="aspect-[16/9] bg-neutral-100 overflow-hidden cursor-pointer">
+                      <img
+                        src={game.imageUrl}
+                        alt={`${game.name} 이미지`}
+                        className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+                      />
+                    </div>
+                  </Link>
                 ) : null}
                 <div className="p-5">
                   <div className="flex items-start justify-between gap-4">
-                    <h2 className="text-xl font-semibold">{game.name}</h2>
+                    <h2 className="text-xl font-semibold hover:text-neutral-600 transition-colors">
+                      <Link href={`/boardgames/${game.id}`}>
+                        {game.name}
+                      </Link>
+                    </h2>
                     <span className="shrink-0 rounded-md bg-emerald-50 px-2.5 py-1 text-sm font-medium text-emerald-800">
                       난이도 {game.difficulty}
                     </span>

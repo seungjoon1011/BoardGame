@@ -8,6 +8,7 @@ import { RedisModule } from './redis/redis.module';
 import { ConfigModule } from '@nestjs/config';
 import { BoardGameModule } from './modules/boardgame/boardgame.module';
 import { S3Module } from './modules/s3/s3.module';
+import { ReviewModule } from './modules/review/review.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { S3Module } from './modules/s3/s3.module';
     RedisModule,
     BoardGameModule,
     S3Module,
+    ReviewModule,
     ConfigModule.forRoot({
       isGlobal: true,
     }),
